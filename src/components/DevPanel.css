@@ -1,35 +1,25 @@
 .dev-panel {
   width: 100%;
+  max-height: 70vh;
+  overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  overflow: hidden;
   background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
 }
 
 .dev-panel__header {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.dev-panel__toggle {
-  flex: 1;
-  display: flex;
-  align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-align: left;
-}
-
-.dev-panel__toggle:hover {
-  color: rgba(255, 255, 255, 0.75);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: sticky;
+  top: 0;
+  background: rgba(14, 14, 28, 0.95);
+  z-index: 1;
+  flex-shrink: 0;
 }
 
 .dev-panel__tag {
@@ -40,21 +30,20 @@
   padding: 1px 6px;
   font-size: 9px;
   letter-spacing: 0.1em;
+  text-transform: uppercase;
   flex-shrink: 0;
 }
 
 .dev-panel__title {
   flex: 1;
-}
-
-.dev-panel__chevron {
-  font-size: 9px;
-  opacity: 0.4;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .dev-panel__reset {
   padding: 6px 14px;
-  margin-right: 8px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
@@ -76,6 +65,93 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+/* Mic selector */
+.dev-panel__mic-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dev-panel__mic-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.dev-panel__mic-select {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.dev-panel__mic-select:focus {
+  border-color: rgba(100, 170, 255, 0.4);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dev-panel__mic-select option {
+  background: #1a1a2e;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Feature sections */
+.feature-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.feature-section + .feature-section {
+  margin-top: 8px;
+  padding-top: 16px;
+}
+
+.feature-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.feature-section__name {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.feature-section__checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: rgba(100, 170, 255, 0.85);
+  flex-shrink: 0;
+}
+
+.feature-section__content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: opacity 0.2s;
+}
+
+.feature-section__content--disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 /* Band block */
@@ -162,44 +238,4 @@
 .dev-panel__master {
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* Mic selector */
-.dev-panel__mic-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.dev-panel__mic-label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.05em;
-  flex-shrink: 0;
-}
-
-.dev-panel__mic-select {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 10px;
-  padding: 4px 8px;
-  cursor: pointer;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-.dev-panel__mic-select:focus {
-  border-color: rgba(100, 170, 255, 0.4);
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.dev-panel__mic-select option {
-  background: #1a1a2e;
-  color: rgba(255, 255, 255, 0.8);
 }

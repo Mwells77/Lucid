@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { BandConfig } from '../types/audio'
 import { BAND_DESCRIPTORS } from '../types/audio'
 import './DevPanel.css'
@@ -50,76 +50,96 @@ interface DevPanelProps {
 }
 
 export function DevPanel({ bands, wetDry, onBandChange, onWetDryChange, onReset, devices, devicesLoading, selectedDeviceId, onDeviceChange }: DevPanelProps) {
-  const [open, setOpen] = useState(true)
+  const [delayEnabled, setDelayEnabled] = useState(true)
+  const savedWetDry = useRef(wetDry)
+
+  function handleDelayToggle(enabled: boolean) {
+    if (!enabled) {
+      savedWetDry.current = wetDry
+      onWetDryChange(0)
+    } else {
+      onWetDryChange(savedWetDry.current)
+    }
+    setDelayEnabled(enabled)
+  }
 
   return (
     <div className="dev-panel">
       <div className="dev-panel__header">
-        <button className="dev-panel__toggle" onClick={() => setOpen(o => !o)}>
-          <span className="dev-panel__tag">dev</span>
-          <span className="dev-panel__title">band controls</span>
-          <span className="dev-panel__chevron">{open ? '▲' : '▼'}</span>
-        </button>
+        <span className="dev-panel__tag">dev</span>
+        <span className="dev-panel__title">controls</span>
         <button className="dev-panel__reset" onClick={onReset} title="Reset all to defaults">
           reset
         </button>
       </div>
 
-      {open && (
-        <div className="dev-panel__body">
-          <div className="dev-panel__mic-row">
-            <span className="dev-panel__mic-label">mic</span>
-            <select
-              className="dev-panel__mic-select"
-              disabled={devicesLoading}
-              value={selectedDeviceId}
-              onChange={e => onDeviceChange(e.target.value)}
-            >
-              {devicesLoading ? (
-                <option value="">Loading microphones...</option>
-              ) : (
-                devices.map(d => (
-                  <option key={d.deviceId} value={d.deviceId}>
-                    {d.label || d.deviceId}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
+      <div className="dev-panel__body">
+        <div className="dev-panel__mic-row">
+          <span className="dev-panel__mic-label">mic</span>
+          <select
+            className="dev-panel__mic-select"
+            disabled={devicesLoading}
+            value={selectedDeviceId}
+            onChange={e => onDeviceChange(e.target.value)}
+          >
+            {devicesLoading ? (
+              <option value="">Loading microphones...</option>
+            ) : (
+              devices.map(d => (
+                <option key={d.deviceId} value={d.deviceId}>
+                  {d.label || d.deviceId}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
 
-          {BAND_DESCRIPTORS.map((desc, i) => (
-            <div key={desc.name} className="band-block">
-              <span className="band-block__name">{desc.name}</span>
-              <div className="band-block__sliders">
-                <SliderRow
-                  label="delay"
-                  value={bands[i].delayTime}
-                  min={0} max={1} step={0.01}
-                  display={`${bands[i].delayTime.toFixed(2)}s`}
-                  onChange={v => onBandChange(i, { delayTime: v })}
-                />
-                <SliderRow
-                  label="feedback"
-                  value={bands[i].feedback}
-                  min={0} max={0.9} step={0.01}
-                  display={bands[i].feedback.toFixed(2)}
-                  onChange={v => onBandChange(i, { feedback: v })}
-                />
-              </div>
-            </div>
-          ))}
-
-          <div className="dev-panel__master">
-            <SliderRow
-              label="wet / dry"
-              value={wetDry}
-              min={0} max={1} step={0.01}
-              display={`${Math.round(wetDry * 100)}%`}
-              onChange={onWetDryChange}
+        <div className="feature-section">
+          <div className="feature-section__header">
+            <span className="feature-section__name">Multiband Delay</span>
+            <input
+              type="checkbox"
+              className="feature-section__checkbox"
+              checked={delayEnabled}
+              onChange={e => handleDelayToggle(e.target.checked)}
             />
           </div>
+
+          <div className={`feature-section__content${delayEnabled ? '' : ' feature-section__content--disabled'}`}>
+            {BAND_DESCRIPTORS.map((desc, i) => (
+              <div key={desc.name} className="band-block">
+                <span className="band-block__name">{desc.name}</span>
+                <div className="band-block__sliders">
+                  <SliderRow
+                    label="delay"
+                    value={bands[i].delayTime}
+                    min={0} max={1} step={0.01}
+                    display={`${bands[i].delayTime.toFixed(2)}s`}
+                    onChange={v => onBandChange(i, { delayTime: v })}
+                  />
+                  <SliderRow
+                    label="feedback"
+                    value={bands[i].feedback}
+                    min={0} max={0.9} step={0.01}
+                    display={bands[i].feedback.toFixed(2)}
+                    onChange={v => onBandChange(i, { feedback: v })}
+                  />
+                </div>
+              </div>
+            ))}
+
+            <div className="dev-panel__master">
+              <SliderRow
+                label="wet / dry"
+                value={wetDry}
+                min={0} max={1} step={0.01}
+                display={`${Math.round(wetDry * 100)}%`}
+                onChange={onWetDryChange}
+              />
+            </div>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
