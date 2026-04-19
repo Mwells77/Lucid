@@ -20,8 +20,8 @@ Take raw ambient sound from the microphone and run it through a multiband delay 
 src/
   audio/engine.ts       — AudioEngine class + getAudioInputDevices() helper
   components/Orb.tsx    — animated on/off toggle button
-  components/DevPanel.tsx — scrollable feature list; mic selector + Multiband Delay section
-  types/audio.ts        — BandConfig, EngineConfig, BAND_DESCRIPTORS, defaults
+  components/DevPanel.tsx — scrollable feature list; mic selector, Multiband Delay, Harmonic Resonator sections
+  types/audio.ts        — BandConfig, EngineConfig, ResonatorConfig, Chord, GHIBLI_CHORDS, defaults
   App.tsx               — holds engineRef, device list state, wires state to engine
 ```
 
@@ -29,10 +29,15 @@ src/
 
 ```
 mic → MediaStreamSource
-        ├─ dry path → dryGain ──────────────────────┐
-        └─ 5 band processors:                       │
-             [HP + LP filters] → delay ←─ feedback  │
-                               └→ outputGain → wetGain → masterGain → destination
+        ├─ dry path ──────────────────────────────────────────→ dryGain ───────┐
+        ├─ 5 band processors:                                                   │
+        │    [HP + LP filters] → delay ←─ feedback                             │
+        │                      └→ outputGain → mbdWetGain ────────────────────┤
+        └─ harmonic resonator:                                                  │
+             5 bandpass filters (high Q, tuned to chord tones) in parallel     │
+             → resonatorSum → resonatorWetGain ────────────────────────────────┤
+                                                                                ↓
+                                                                          masterGain → destination
 ```
 
 - Graph is built **once** on `start(deviceId?)`, modified in-place via `AudioParam.setTargetAtTime()` — never rebuilt
@@ -40,11 +45,13 @@ mic → MediaStreamSource
 - `updateBand(index, patch)` and `updateWetDry(value)` apply changes live to the running graph
 - `getUserMedia` constraints always disable `echoCancellation`, `noiseSuppression`, `autoGainControl`
 - `getAudioInputDevices()` fires a permission-prompt stream on mount so `enumerateDevices()` returns labels; App auto-selects the first device matching `/built-in|default/i`
+- Multiband delay and harmonic resonator are fully independent — each has its own wet gain node; disabling one does not affect the other
 
 ### Key defaults (src/types/audio.ts)
 
-5 bands: sub-bass (0–80Hz), bass (80–300Hz), low-mid (300–1kHz), high-mid (1–6kHz), air (6–20kHz).
-Each band has staggered delay times (0.5s → 0.12s) and feedback (0.5 → 0.3). Wet/dry default: 60% wet.
+**Multiband delay:** 5 bands: sub-bass (0–80Hz), bass (80–300Hz), low-mid (300–1kHz), high-mid (1–6kHz), air (6–20kHz). Staggered delay times (0.5s → 0.12s) and feedback (0.5 → 0.3). Wet/dry default: 60% wet.
+
+**Harmonic resonator:** 4 selectable Ghibli-flavoured chords (Fmaj9, Am9, Dm11, Cmaj9#11). Default chord: Fmaj9. Q default: 80 (high resonance/ringing). Per-band gain default: 30 (compensates for bandpass attenuation). Wet/dry default: 50%. Disabled by default — opt-in only. Chord changes glide via τ=0.25s.
 
 ## Current state
 
@@ -55,6 +62,7 @@ Each band has staggered delay times (0.5s → 0.12s) and feedback (0.5 → 0.3).
 - [x] Multiband Delay section — checkbox bypasses effect (wet → 0) and restores on re-enable; sliders dim when disabled
 - [x] Reset button restores defaults live without restarting the graph
 - [x] Mic device selector — permission prompt on load, auto-selects built-in mic, restart-on-change
+- [x] Harmonic Resonator — 5 high-Q bandpass filters tuned to a selectable Ghibli chord; independent bypass, wet/dry, Q, and per-tone gain sliders; chord glides smoothly on change
 - [x] Deployed and working on GitHub Pages
 
 ## Workflow
@@ -64,7 +72,7 @@ After implementing any change, commit it and push to GitHub immediately.
 ## Planned / ideas
 
 - Visualiser driven by AnalyserNode (FFT or waveform) behind/around the orb
-- Harmonic quantisation — pitch-shift each band to nearest musical interval
+- Harmonic quantisation — pitch-shift each band to nearest musical interval (distinct from the resonator)
 - Reverb tail (ConvolverNode) after the wet mix
 - Preset system (save/load band configs)
 - Remove or hide dev panel for production polish
