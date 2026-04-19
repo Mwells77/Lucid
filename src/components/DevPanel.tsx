@@ -184,8 +184,8 @@ export function DevPanel({
             <SliderRow
               label="Q"
               value={resonatorConfig.q}
-              min={4} max={40} step={0.5}
-              display={resonatorConfig.q.toFixed(1)}
+              min={4} max={200} step={1}
+              display={resonatorConfig.q.toFixed(0)}
               onChange={onResonatorQChange}
             />
 
@@ -204,8 +204,8 @@ export function DevPanel({
                   <SliderRow
                     label="gain"
                     value={band.gain}
-                    min={0} max={1} step={0.01}
-                    display={band.gain.toFixed(2)}
+                    min={0} max={50} step={0.5}
+                    display={band.gain.toFixed(1)}
                     onChange={v => onResonatorBandGainChange(i, v)}
                   />
                 </div>

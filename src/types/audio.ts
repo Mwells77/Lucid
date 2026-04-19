@@ -58,9 +58,9 @@ export interface ResonatorConfig {
 export const DEFAULT_RESONATOR_CONFIG: ResonatorConfig = {
   enabled: false,
   chord: GHIBLI_CHORDS[0],
-  q: 18,
-  wetDry: 0.4,
-  bands: GHIBLI_CHORDS[0].tones.map(freq => ({ resonantFreq: freq, gain: 1.0 })),
+  q: 80,
+  wetDry: 0.5,
+  bands: GHIBLI_CHORDS[0].tones.map(freq => ({ resonantFreq: freq, gain: 30.0 })),
 }
 
 export const DEFAULT_ENGINE_CONFIG: EngineConfig = {
