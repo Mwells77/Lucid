@@ -32,15 +32,24 @@ function SliderRow({ label, value, min, max, step, display, onChange }: SliderRo
   )
 }
 
+interface AudioDevice {
+  deviceId: string
+  label: string
+}
+
 interface DevPanelProps {
   bands: BandConfig[]
   wetDry: number
   onBandChange: (index: number, patch: Partial<BandConfig>) => void
   onWetDryChange: (value: number) => void
   onReset: () => void
+  devices: AudioDevice[]
+  devicesLoading: boolean
+  selectedDeviceId: string
+  onDeviceChange: (deviceId: string) => void
 }
 
-export function DevPanel({ bands, wetDry, onBandChange, onWetDryChange, onReset }: DevPanelProps) {
+export function DevPanel({ bands, wetDry, onBandChange, onWetDryChange, onReset, devices, devicesLoading, selectedDeviceId, onDeviceChange }: DevPanelProps) {
   const [open, setOpen] = useState(true)
 
   return (
@@ -58,6 +67,26 @@ export function DevPanel({ bands, wetDry, onBandChange, onWetDryChange, onReset 
 
       {open && (
         <div className="dev-panel__body">
+          <div className="dev-panel__mic-row">
+            <span className="dev-panel__mic-label">mic</span>
+            <select
+              className="dev-panel__mic-select"
+              disabled={devicesLoading}
+              value={selectedDeviceId}
+              onChange={e => onDeviceChange(e.target.value)}
+            >
+              {devicesLoading ? (
+                <option value="">Loading microphones...</option>
+              ) : (
+                devices.map(d => (
+                  <option key={d.deviceId} value={d.deviceId}>
+                    {d.label || d.deviceId}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
           {BAND_DESCRIPTORS.map((desc, i) => (
             <div key={desc.name} className="band-block">
               <span className="band-block__name">{desc.name}</span>

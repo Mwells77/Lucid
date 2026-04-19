@@ -1,10 +1,20 @@
-import { useCallback, useRef, useState } from 'react'
-import { AudioEngine } from './audio/engine'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AudioEngine, getAudioInputDevices } from './audio/engine'
 import { Orb } from './components/Orb'
 import { DevPanel } from './components/DevPanel'
 import type { BandConfig } from './types/audio'
 import { DEFAULT_ENGINE_CONFIG } from './types/audio'
 import './App.css'
+
+interface AudioDevice {
+  deviceId: string
+  label: string
+}
+
+function pickDefaultDevice(list: AudioDevice[]): string {
+  const preferred = list.find(d => /built-in|default/i.test(d.label))
+  return (preferred ?? list[0])?.deviceId ?? ''
+}
 
 export function App() {
   const engineRef = useRef<AudioEngine | null>(null)
@@ -12,6 +22,19 @@ export function App() {
   const [error, setError] = useState<string | null>(null)
   const [bands, setBands] = useState<BandConfig[]>(DEFAULT_ENGINE_CONFIG.bands)
   const [wetDry, setWetDry] = useState(DEFAULT_ENGINE_CONFIG.wetDry)
+  const [devices, setDevices] = useState<AudioDevice[]>([])
+  const [devicesLoading, setDevicesLoading] = useState(true)
+  const [deviceId, setDeviceId] = useState<string>('')
+
+  useEffect(() => {
+    getAudioInputDevices()
+      .then(list => {
+        setDevices(list)
+        setDeviceId(pickDefaultDevice(list))
+      })
+      .catch(() => {})
+      .finally(() => setDevicesLoading(false))
+  }, [])
 
   const toggle = useCallback(async () => {
     setError(null)
@@ -30,12 +53,34 @@ export function App() {
           wetDry,
         })
       }
-      await engineRef.current.start()
+      await engineRef.current.start(deviceId || undefined)
       setActive(true)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'microphone access denied'
       setError(msg)
       engineRef.current = null
+    }
+  }, [active, bands, wetDry, deviceId])
+
+  const handleDeviceChange = useCallback(async (newDeviceId: string) => {
+    setDeviceId(newDeviceId)
+    if (active) {
+      engineRef.current?.stop()
+      engineRef.current = null
+      setActive(false)
+      setError(null)
+      try {
+        engineRef.current = new AudioEngine({
+          bands: bands as [BandConfig, BandConfig, BandConfig, BandConfig, BandConfig],
+          wetDry,
+        })
+        await engineRef.current.start(newDeviceId || undefined)
+        setActive(true)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'microphone access denied'
+        setError(msg)
+        engineRef.current = null
+      }
     }
   }, [active, bands, wetDry])
 
@@ -77,6 +122,10 @@ export function App() {
           onBandChange={handleBandChange}
           onWetDryChange={handleWetDryChange}
           onReset={handleReset}
+          devices={devices}
+          devicesLoading={devicesLoading}
+          selectedDeviceId={deviceId}
+          onDeviceChange={handleDeviceChange}
         />
       </section>
     </main>

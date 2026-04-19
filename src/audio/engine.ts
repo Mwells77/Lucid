@@ -1,6 +1,15 @@
 import type { BandConfig, EngineConfig } from '../types/audio'
 import { DEFAULT_ENGINE_CONFIG } from '../types/audio'
 
+export async function getAudioInputDevices(): Promise<Array<{ deviceId: string; label: string }>> {
+  const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+  const devices = await navigator.mediaDevices.enumerateDevices()
+  tempStream.getTracks().forEach(t => t.stop())
+  return devices
+    .filter(d => d.kind === 'audioinput')
+    .map(d => ({ deviceId: d.deviceId, label: d.label }))
+}
+
 interface BandNodes {
   lowpass: BiquadFilterNode
   highpass: BiquadFilterNode
@@ -25,10 +34,18 @@ export class AudioEngine {
     this.config = structuredClone(config)
   }
 
-  async start(): Promise<void> {
+  async start(deviceId?: string): Promise<void> {
     if (this.ctx) return
 
-    this.stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    this.stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: deviceId ? { exact: deviceId } : undefined,
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      },
+      video: false,
+    })
     this.ctx = new AudioContext()
 
     if (this.ctx.state === 'suspended') {

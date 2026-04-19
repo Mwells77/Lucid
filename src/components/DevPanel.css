@@ -163,3 +163,43 @@
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
+
+/* Mic selector */
+.dev-panel__mic-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dev-panel__mic-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.dev-panel__mic-select {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.dev-panel__mic-select:focus {
+  border-color: rgba(100, 170, 255, 0.4);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dev-panel__mic-select option {
+  background: #1a1a2e;
+  color: rgba(255, 255, 255, 0.8);
+}
