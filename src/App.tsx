@@ -49,6 +49,15 @@ export function App() {
     setWetDry(value)
   }, [])
 
+  const handleReset = useCallback(() => {
+    DEFAULT_ENGINE_CONFIG.bands.forEach((cfg, i) => {
+      engineRef.current?.updateBand(i, cfg)
+    })
+    engineRef.current?.updateWetDry(DEFAULT_ENGINE_CONFIG.wetDry)
+    setBands(structuredClone(DEFAULT_ENGINE_CONFIG.bands))
+    setWetDry(DEFAULT_ENGINE_CONFIG.wetDry)
+  }, [])
+
   return (
     <main className="app">
       <header className="app__header">
@@ -67,6 +76,7 @@ export function App() {
           wetDry={wetDry}
           onBandChange={handleBandChange}
           onWetDryChange={handleWetDryChange}
+          onReset={handleReset}
         />
       </section>
     </main>

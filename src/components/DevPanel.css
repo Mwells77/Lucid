@@ -1,14 +1,19 @@
 .dev-panel {
   width: 100%;
-  max-width: 520px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.03);
 }
 
+.dev-panel__header {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .dev-panel__toggle {
-  width: 100%;
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -20,6 +25,7 @@
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  text-align: left;
 }
 
 .dev-panel__toggle:hover {
@@ -27,106 +33,133 @@
 }
 
 .dev-panel__tag {
-  background: rgba(255, 200, 50, 0.15);
-  color: rgba(255, 200, 50, 0.8);
-  border: 1px solid rgba(255, 200, 50, 0.25);
+  background: rgba(255, 200, 50, 0.12);
+  color: rgba(255, 200, 50, 0.75);
+  border: 1px solid rgba(255, 200, 50, 0.2);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 9px;
   letter-spacing: 0.1em;
+  flex-shrink: 0;
 }
 
 .dev-panel__title {
   flex: 1;
-  text-align: left;
 }
 
 .dev-panel__chevron {
   font-size: 9px;
-  opacity: 0.5;
+  opacity: 0.4;
+}
+
+.dev-panel__reset {
+  padding: 6px 14px;
+  margin-right: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.dev-panel__reset:hover {
+  color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .dev-panel__body {
-  padding: 4px 16px 16px;
+  padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Band block */
+.band-block {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.dev-panel__bands {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.dev-panel__master {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.band-row {
-  display: grid;
-  grid-template-columns: 72px 1fr 1fr;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 0;
-}
-
-.band-row__name {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
-  letter-spacing: 0.05em;
+.band-block__name {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.band-row__label {
+.band-block__sliders {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
-  letter-spacing: 0.04em;
 }
 
-.band-row__label input[type='range'] {
-  flex: 1;
+/* Slider row */
+.slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slider-row__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.slider-row__label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+}
+
+.slider-row__value {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.25);
+  font-variant-numeric: tabular-nums;
+}
+
+.slider-row input[type='range'] {
+  width: 100%;
   -webkit-appearance: none;
   appearance: none;
   height: 2px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 1px;
   outline: none;
   cursor: pointer;
-  min-width: 60px;
 }
 
-.band-row__label input[type='range']::-webkit-slider-thumb {
+.slider-row input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: rgba(100, 170, 255, 0.8);
+  background: rgba(100, 170, 255, 0.85);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s, transform 0.15s;
 }
 
-.band-row__label input[type='range']::-webkit-slider-thumb:hover {
-  background: rgba(140, 200, 255, 1);
+.slider-row input[type='range']::-webkit-slider-thumb:hover {
+  background: rgba(150, 200, 255, 1);
+  transform: scale(1.15);
 }
 
-.band-row__label input[type='range']::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
+.slider-row input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: rgba(100, 170, 255, 0.8);
+  background: rgba(100, 170, 255, 0.85);
   border: none;
   cursor: pointer;
 }
 
-.band-row__value {
-  min-width: 32px;
-  text-align: right;
-  color: rgba(255, 255, 255, 0.25);
-  font-variant-numeric: tabular-nums;
+/* Master wet/dry separator */
+.dev-panel__master {
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }

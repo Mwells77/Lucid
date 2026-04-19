@@ -3,40 +3,31 @@ import type { BandConfig } from '../types/audio'
 import { BAND_DESCRIPTORS } from '../types/audio'
 import './DevPanel.css'
 
-interface BandRowProps {
-  name: string
-  config: BandConfig
-  onChange: (patch: Partial<BandConfig>) => void
+interface SliderRowProps {
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  display: string
+  onChange: (v: number) => void
 }
 
-function BandRow({ name, config, onChange }: BandRowProps) {
+function SliderRow({ label, value, min, max, step, display, onChange }: SliderRowProps) {
   return (
-    <div className="band-row">
-      <span className="band-row__name">{name}</span>
-      <label className="band-row__label">
-        <span>delay</span>
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.01}
-          value={config.delayTime}
-          onChange={e => onChange({ delayTime: parseFloat(e.target.value) })}
-        />
-        <span className="band-row__value">{config.delayTime.toFixed(2)}s</span>
-      </label>
-      <label className="band-row__label">
-        <span>feedback</span>
-        <input
-          type="range"
-          min={0}
-          max={0.9}
-          step={0.01}
-          value={config.feedback}
-          onChange={e => onChange({ feedback: parseFloat(e.target.value) })}
-        />
-        <span className="band-row__value">{config.feedback.toFixed(2)}</span>
-      </label>
+    <div className="slider-row">
+      <div className="slider-row__header">
+        <span className="slider-row__label">{label}</span>
+        <span className="slider-row__value">{display}</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={e => onChange(parseFloat(e.target.value))}
+      />
     </div>
   )
 }
@@ -46,45 +37,57 @@ interface DevPanelProps {
   wetDry: number
   onBandChange: (index: number, patch: Partial<BandConfig>) => void
   onWetDryChange: (value: number) => void
+  onReset: () => void
 }
 
-export function DevPanel({ bands, wetDry, onBandChange, onWetDryChange }: DevPanelProps) {
+export function DevPanel({ bands, wetDry, onBandChange, onWetDryChange, onReset }: DevPanelProps) {
   const [open, setOpen] = useState(true)
 
   return (
     <div className="dev-panel">
-      <button className="dev-panel__toggle" onClick={() => setOpen(o => !o)}>
-        <span className="dev-panel__tag">dev</span>
-        <span className="dev-panel__title">band controls</span>
-        <span className="dev-panel__chevron">{open ? '▲' : '▼'}</span>
-      </button>
+      <div className="dev-panel__header">
+        <button className="dev-panel__toggle" onClick={() => setOpen(o => !o)}>
+          <span className="dev-panel__tag">dev</span>
+          <span className="dev-panel__title">band controls</span>
+          <span className="dev-panel__chevron">{open ? '▲' : '▼'}</span>
+        </button>
+        <button className="dev-panel__reset" onClick={onReset} title="Reset all to defaults">
+          reset
+        </button>
+      </div>
 
       {open && (
         <div className="dev-panel__body">
-          <div className="dev-panel__bands">
-            {BAND_DESCRIPTORS.map((desc, i) => (
-              <BandRow
-                key={desc.name}
-                name={desc.name}
-                config={bands[i]}
-                onChange={patch => onBandChange(i, patch)}
-              />
-            ))}
-          </div>
+          {BAND_DESCRIPTORS.map((desc, i) => (
+            <div key={desc.name} className="band-block">
+              <span className="band-block__name">{desc.name}</span>
+              <div className="band-block__sliders">
+                <SliderRow
+                  label="delay"
+                  value={bands[i].delayTime}
+                  min={0} max={1} step={0.01}
+                  display={`${bands[i].delayTime.toFixed(2)}s`}
+                  onChange={v => onBandChange(i, { delayTime: v })}
+                />
+                <SliderRow
+                  label="feedback"
+                  value={bands[i].feedback}
+                  min={0} max={0.9} step={0.01}
+                  display={bands[i].feedback.toFixed(2)}
+                  onChange={v => onBandChange(i, { feedback: v })}
+                />
+              </div>
+            </div>
+          ))}
 
           <div className="dev-panel__master">
-            <label className="band-row__label">
-              <span>wet / dry</span>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={wetDry}
-                onChange={e => onWetDryChange(parseFloat(e.target.value))}
-              />
-              <span className="band-row__value">{Math.round(wetDry * 100)}%</span>
-            </label>
+            <SliderRow
+              label="wet / dry"
+              value={wetDry}
+              min={0} max={1} step={0.01}
+              display={`${Math.round(wetDry * 100)}%`}
+              onChange={onWetDryChange}
+            />
           </div>
         </div>
       )}
