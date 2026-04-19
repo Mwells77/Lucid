@@ -1,0 +1,132 @@
+.dev-panel {
+  width: 100%;
+  max-width: 520px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dev-panel__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dev-panel__toggle:hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.dev-panel__tag {
+  background: rgba(255, 200, 50, 0.15);
+  color: rgba(255, 200, 50, 0.8);
+  border: 1px solid rgba(255, 200, 50, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.dev-panel__title {
+  flex: 1;
+  text-align: left;
+}
+
+.dev-panel__chevron {
+  font-size: 9px;
+  opacity: 0.5;
+}
+
+.dev-panel__body {
+  padding: 4px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dev-panel__bands {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dev-panel__master {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.band-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.band-row__name {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.band-row__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.04em;
+}
+
+.band-row__label input[type='range'] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 1px;
+  outline: none;
+  cursor: pointer;
+  min-width: 60px;
+}
+
+.band-row__label input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(100, 170, 255, 0.8);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.band-row__label input[type='range']::-webkit-slider-thumb:hover {
+  background: rgba(140, 200, 255, 1);
+}
+
+.band-row__label input[type='range']::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(100, 170, 255, 0.8);
+  border: none;
+  cursor: pointer;
+}
+
+.band-row__value {
+  min-width: 32px;
+  text-align: right;
+  color: rgba(255, 255, 255, 0.25);
+  font-variant-numeric: tabular-nums;
+}
