@@ -20,7 +20,7 @@ Take raw ambient sound from the microphone and run it through a multiband delay 
 src/
   audio/engine.ts       — AudioEngine class + getAudioInputDevices() helper
   components/Orb.tsx    — animated on/off toggle button
-  components/DevPanel.tsx — collapsible 5-band + wet/dry + mic selector
+  components/DevPanel.tsx — scrollable feature list; mic selector + Multiband Delay section
   types/audio.ts        — BandConfig, EngineConfig, BAND_DESCRIPTORS, defaults
   App.tsx               — holds engineRef, device list state, wires state to engine
 ```
@@ -51,7 +51,8 @@ Each band has staggered delay times (0.5s → 0.12s) and feedback (0.5 → 0.3).
 - [x] Core audio engine with multiband delay processor
 - [x] Mic input via getUserMedia, full signal graph
 - [x] Orb UI toggle with CSS pulse animation
-- [x] Dev panel: 5-band sliders (delay + feedback) + master wet/dry
+- [x] Dev panel: permanently visible scrollable feature list (max-height, overflow-y: auto)
+- [x] Multiband Delay section — checkbox bypasses effect (wet → 0) and restores on re-enable; sliders dim when disabled
 - [x] Reset button restores defaults live without restarting the graph
 - [x] Mic device selector — permission prompt on load, auto-selects built-in mic, restart-on-change
 - [x] Deployed and working on GitHub Pages
