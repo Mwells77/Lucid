@@ -18,11 +18,11 @@ Take raw ambient sound from the microphone and run it through a multiband delay 
 
 ```
 src/
-  audio/engine.ts       — AudioEngine class: full signal graph lifecycle
+  audio/engine.ts       — AudioEngine class + getAudioInputDevices() helper
   components/Orb.tsx    — animated on/off toggle button
-  components/DevPanel.tsx — collapsible 5-band + wet/dry controls
+  components/DevPanel.tsx — collapsible 5-band + wet/dry + mic selector
   types/audio.ts        — BandConfig, EngineConfig, BAND_DESCRIPTORS, defaults
-  App.tsx               — holds engineRef, wires state to engine
+  App.tsx               — holds engineRef, device list state, wires state to engine
 ```
 
 ### Signal chain
@@ -35,9 +35,11 @@ mic → MediaStreamSource
                                └→ outputGain → wetGain → masterGain → destination
 ```
 
-- Graph is built **once** on `start()`, modified in-place via `AudioParam.setTargetAtTime()` — never rebuilt
+- Graph is built **once** on `start(deviceId?)`, modified in-place via `AudioParam.setTargetAtTime()` — never rebuilt
 - `AudioEngine` lives outside React, held in a `useRef` — no useEffect audio logic leaks
 - `updateBand(index, patch)` and `updateWetDry(value)` apply changes live to the running graph
+- `getUserMedia` constraints always disable `echoCancellation`, `noiseSuppression`, `autoGainControl`
+- `getAudioInputDevices()` fires a permission-prompt stream on mount so `enumerateDevices()` returns labels; App auto-selects the first device matching `/built-in|default/i`
 
 ### Key defaults (src/types/audio.ts)
 
@@ -51,7 +53,12 @@ Each band has staggered delay times (0.5s → 0.12s) and feedback (0.5 → 0.3).
 - [x] Orb UI toggle with CSS pulse animation
 - [x] Dev panel: 5-band sliders (delay + feedback) + master wet/dry
 - [x] Reset button restores defaults live without restarting the graph
+- [x] Mic device selector — permission prompt on load, auto-selects built-in mic, restart-on-change
 - [x] Deployed and working on GitHub Pages
+
+## Workflow
+
+After implementing any change, commit it and push to GitHub immediately.
 
 ## Planned / ideas
 
