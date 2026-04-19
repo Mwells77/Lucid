@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AudioEngine, getAudioInputDevices } from './audio/engine'
 import { Orb } from './components/Orb'
 import { DevPanel } from './components/DevPanel'
-import type { BandConfig } from './types/audio'
-import { DEFAULT_ENGINE_CONFIG } from './types/audio'
+import type { BandConfig, Chord, ResonatorConfig } from './types/audio'
+import { DEFAULT_ENGINE_CONFIG, DEFAULT_RESONATOR_CONFIG } from './types/audio'
 import './App.css'
 
 interface AudioDevice {
@@ -25,6 +25,9 @@ export function App() {
   const [devices, setDevices] = useState<AudioDevice[]>([])
   const [devicesLoading, setDevicesLoading] = useState(true)
   const [deviceId, setDeviceId] = useState<string>('')
+  const [resonatorConfig, setResonatorConfig] = useState<ResonatorConfig>(
+    structuredClone(DEFAULT_RESONATOR_CONFIG)
+  )
 
   useEffect(() => {
     getAudioInputDevices()
@@ -35,6 +38,14 @@ export function App() {
       .catch(() => {})
       .finally(() => setDevicesLoading(false))
   }, [])
+
+  function makeEngine(): AudioEngine {
+    return new AudioEngine({
+      bands: bands as [BandConfig, BandConfig, BandConfig, BandConfig, BandConfig],
+      wetDry,
+      resonator: resonatorConfig,
+    })
+  }
 
   const toggle = useCallback(async () => {
     setError(null)
@@ -48,10 +59,7 @@ export function App() {
 
     try {
       if (!engineRef.current) {
-        engineRef.current = new AudioEngine({
-          bands: bands as [BandConfig, BandConfig, BandConfig, BandConfig, BandConfig],
-          wetDry,
-        })
+        engineRef.current = makeEngine()
       }
       await engineRef.current.start(deviceId || undefined)
       setActive(true)
@@ -60,7 +68,8 @@ export function App() {
       setError(msg)
       engineRef.current = null
     }
-  }, [active, bands, wetDry, deviceId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, bands, wetDry, deviceId, resonatorConfig])
 
   const handleDeviceChange = useCallback(async (newDeviceId: string) => {
     setDeviceId(newDeviceId)
@@ -70,10 +79,7 @@ export function App() {
       setActive(false)
       setError(null)
       try {
-        engineRef.current = new AudioEngine({
-          bands: bands as [BandConfig, BandConfig, BandConfig, BandConfig, BandConfig],
-          wetDry,
-        })
+        engineRef.current = makeEngine()
         await engineRef.current.start(newDeviceId || undefined)
         setActive(true)
       } catch (err) {
@@ -82,7 +88,8 @@ export function App() {
         engineRef.current = null
       }
     }
-  }, [active, bands, wetDry])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, bands, wetDry, resonatorConfig])
 
   const handleBandChange = useCallback((index: number, patch: Partial<BandConfig>) => {
     engineRef.current?.updateBand(index, patch)
@@ -94,13 +101,54 @@ export function App() {
     setWetDry(value)
   }, [])
 
+  const handleResonatorEnabledChange = useCallback((enabled: boolean) => {
+    engineRef.current?.setResonatorEnabled(enabled)
+    setResonatorConfig(prev => ({ ...prev, enabled }))
+  }, [])
+
+  const handleResonatorChordChange = useCallback((chord: Chord) => {
+    engineRef.current?.setResonatorChord(chord)
+    setResonatorConfig(prev => ({
+      ...prev,
+      chord,
+      bands: chord.tones.map((freq, i) => ({ ...prev.bands[i], resonantFreq: freq })),
+    }))
+  }, [])
+
+  const handleResonatorQChange = useCallback((q: number) => {
+    engineRef.current?.setResonatorQ(q)
+    setResonatorConfig(prev => ({ ...prev, q }))
+  }, [])
+
+  const handleResonatorWetDryChange = useCallback((value: number) => {
+    engineRef.current?.setResonatorWetDry(value)
+    setResonatorConfig(prev => ({ ...prev, wetDry: value }))
+  }, [])
+
+  const handleResonatorBandGainChange = useCallback((i: number, gain: number) => {
+    engineRef.current?.updateResonatorBand(i, { gain })
+    setResonatorConfig(prev => ({
+      ...prev,
+      bands: prev.bands.map((b, idx) => (idx === i ? { ...b, gain } : b)),
+    }))
+  }, [])
+
   const handleReset = useCallback(() => {
     DEFAULT_ENGINE_CONFIG.bands.forEach((cfg, i) => {
       engineRef.current?.updateBand(i, cfg)
     })
     engineRef.current?.updateWetDry(DEFAULT_ENGINE_CONFIG.wetDry)
+
+    const defaultRes = structuredClone(DEFAULT_RESONATOR_CONFIG)
+    engineRef.current?.setResonatorEnabled(defaultRes.enabled)
+    engineRef.current?.setResonatorChord(defaultRes.chord)
+    engineRef.current?.setResonatorQ(defaultRes.q)
+    engineRef.current?.setResonatorWetDry(defaultRes.wetDry)
+    defaultRes.bands.forEach((b, i) => engineRef.current?.updateResonatorBand(i, b))
+
     setBands(structuredClone(DEFAULT_ENGINE_CONFIG.bands))
     setWetDry(DEFAULT_ENGINE_CONFIG.wetDry)
+    setResonatorConfig(defaultRes)
   }, [])
 
   return (
@@ -126,6 +174,12 @@ export function App() {
           devicesLoading={devicesLoading}
           selectedDeviceId={deviceId}
           onDeviceChange={handleDeviceChange}
+          resonatorConfig={resonatorConfig}
+          onResonatorEnabledChange={handleResonatorEnabledChange}
+          onResonatorChordChange={handleResonatorChordChange}
+          onResonatorQChange={handleResonatorQChange}
+          onResonatorWetDryChange={handleResonatorWetDryChange}
+          onResonatorBandGainChange={handleResonatorBandGainChange}
         />
       </section>
     </main>

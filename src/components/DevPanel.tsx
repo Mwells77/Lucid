@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
-import type { BandConfig } from '../types/audio'
-import { BAND_DESCRIPTORS } from '../types/audio'
+import type { BandConfig, Chord, ResonatorConfig } from '../types/audio'
+import { BAND_DESCRIPTORS, GHIBLI_CHORDS } from '../types/audio'
 import './DevPanel.css'
 
 interface SliderRowProps {
@@ -47,9 +47,20 @@ interface DevPanelProps {
   devicesLoading: boolean
   selectedDeviceId: string
   onDeviceChange: (deviceId: string) => void
+  resonatorConfig: ResonatorConfig
+  onResonatorEnabledChange: (enabled: boolean) => void
+  onResonatorChordChange: (chord: Chord) => void
+  onResonatorQChange: (q: number) => void
+  onResonatorWetDryChange: (value: number) => void
+  onResonatorBandGainChange: (i: number, gain: number) => void
 }
 
-export function DevPanel({ bands, wetDry, onBandChange, onWetDryChange, onReset, devices, devicesLoading, selectedDeviceId, onDeviceChange }: DevPanelProps) {
+export function DevPanel({
+  bands, wetDry, onBandChange, onWetDryChange, onReset,
+  devices, devicesLoading, selectedDeviceId, onDeviceChange,
+  resonatorConfig, onResonatorEnabledChange, onResonatorChordChange,
+  onResonatorQChange, onResonatorWetDryChange, onResonatorBandGainChange,
+}: DevPanelProps) {
   const [delayEnabled, setDelayEnabled] = useState(true)
   const savedWetDry = useRef(wetDry)
 
@@ -137,6 +148,69 @@ export function DevPanel({ bands, wetDry, onBandChange, onWetDryChange, onReset,
                 onChange={onWetDryChange}
               />
             </div>
+          </div>
+        </div>
+
+        <div className="feature-section">
+          <div className="feature-section__header">
+            <span className="feature-section__name">Harmonic Resonator</span>
+            <input
+              type="checkbox"
+              className="feature-section__checkbox"
+              checked={resonatorConfig.enabled}
+              onChange={e => onResonatorEnabledChange(e.target.checked)}
+            />
+          </div>
+
+          <div className={`feature-section__content${resonatorConfig.enabled ? '' : ' feature-section__content--disabled'}`}>
+            <div className="slider-row">
+              <div className="slider-row__header">
+                <span className="slider-row__label">chord</span>
+                <select
+                  className="dev-panel__mic-select"
+                  value={resonatorConfig.chord.name}
+                  onChange={e => {
+                    const chord = GHIBLI_CHORDS.find(c => c.name === e.target.value)
+                    if (chord) onResonatorChordChange(chord)
+                  }}
+                >
+                  {GHIBLI_CHORDS.map(c => (
+                    <option key={c.name} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <SliderRow
+              label="Q"
+              value={resonatorConfig.q}
+              min={4} max={40} step={0.5}
+              display={resonatorConfig.q.toFixed(1)}
+              onChange={onResonatorQChange}
+            />
+
+            <SliderRow
+              label="wet / dry"
+              value={resonatorConfig.wetDry}
+              min={0} max={1} step={0.01}
+              display={`${Math.round(resonatorConfig.wetDry * 100)}%`}
+              onChange={onResonatorWetDryChange}
+            />
+
+            {resonatorConfig.bands.map((band, i) => (
+              <div key={i} className="band-block">
+                <span className="band-block__name">Tone {i + 1}: {band.resonantFreq.toFixed(2)} Hz</span>
+                <div className="band-block__sliders">
+                  <SliderRow
+                    label="gain"
+                    value={band.gain}
+                    min={0} max={1} step={0.01}
+                    display={band.gain.toFixed(2)}
+                    onChange={v => onResonatorBandGainChange(i, v)}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import type { BandConfig, EngineConfig } from '../types/audio'
+import type { BandConfig, Chord, EngineConfig, ResonatorBand } from '../types/audio'
 import { DEFAULT_ENGINE_CONFIG } from '../types/audio'
 
 export async function getAudioInputDevices(): Promise<Array<{ deviceId: string; label: string }>> {
@@ -28,6 +28,11 @@ export class AudioEngine {
   private masterOut: GainNode | null = null
   private bands: BandNodes[] = []
 
+  private resonatorBands: BiquadFilterNode[] = []
+  private resonatorBandGains: GainNode[] = []
+  private resonatorSum: GainNode | null = null
+  private resonatorWetGain: GainNode | null = null
+
   private config: EngineConfig
 
   constructor(config: EngineConfig = DEFAULT_ENGINE_CONFIG) {
@@ -52,38 +57,33 @@ export class AudioEngine {
       await this.ctx.resume()
     }
 
-    this.source = this.ctx.createMediaStreamSource(this.stream)
+    const ctx = this.ctx
+    this.source = ctx.createMediaStreamSource(this.stream)
 
-    // Dry path — raw mic signal
-    this.dryGain = this.ctx.createGain()
+    // Dry path
+    this.dryGain = ctx.createGain()
     this.dryGain.gain.value = 1 - this.config.wetDry
 
-    // Wet path — processed
-    this.wetGain = this.ctx.createGain()
+    // Multiband delay wet path
+    this.wetGain = ctx.createGain()
     this.wetGain.gain.value = this.config.wetDry
 
     // Master output
-    this.masterOut = this.ctx.createGain()
+    this.masterOut = ctx.createGain()
     this.masterOut.gain.value = 1
 
-    // Dry routing: source → dryGain → masterOut → destination
     this.source.connect(this.dryGain)
     this.dryGain.connect(this.masterOut)
+    this.wetGain.connect(this.masterOut)
 
-    // Build multiband wet chain
+    // Multiband delay bands
     const bandFreqs: [number, number][] = [
-      [0, 80],
-      [80, 300],
-      [300, 1000],
-      [1000, 6000],
-      [6000, 20000],
+      [0, 80], [80, 300], [300, 1000], [1000, 6000], [6000, 20000],
     ]
 
     this.bands = bandFreqs.map(([low, high], i) => {
       const cfg = this.config.bands[i]
-      const ctx = this.ctx!
 
-      // Band isolation: HP then LP (or just LP for sub-bass, HP for air)
       const highpass = ctx.createBiquadFilter()
       highpass.type = 'highpass'
       highpass.frequency.value = low === 0 ? 1 : low
@@ -94,36 +94,60 @@ export class AudioEngine {
       lowpass.frequency.value = high === 20000 ? 22000 : high
       lowpass.Q.value = 0.7
 
-      // Delay
       const delay = ctx.createDelay(1.0)
       delay.delayTime.value = cfg.delayTime
 
-      // Feedback loop: delay output → feedbackGain → delay input
       const feedback = ctx.createGain()
       feedback.gain.value = cfg.feedback
 
-      // Band output gain
       const output = ctx.createGain()
       output.gain.value = cfg.gain
 
-      // Signal flow within band:
-      // source → highpass → lowpass → delay → output → wetGain
-      //                                ↑         ↓
-      //                             feedbackGain ←
       this.source!.connect(highpass)
       highpass.connect(lowpass)
       lowpass.connect(delay)
       delay.connect(feedback)
-      feedback.connect(delay)  // feedback loop
+      feedback.connect(delay)
       delay.connect(output)
       output.connect(this.wetGain!)
 
       return { lowpass, highpass, delay, feedback, output }
     })
 
-    this.masterOut.connect(this.ctx.destination)
-    // wetGain already connected into masterOut? No — wet sums into master
-    this.wetGain.connect(this.masterOut)
+    // Harmonic resonator
+    const resCfg = this.config.resonator
+
+    this.resonatorSum = ctx.createGain()
+    this.resonatorSum.gain.value = 1
+
+    this.resonatorWetGain = ctx.createGain()
+    this.resonatorWetGain.gain.value = resCfg.enabled ? resCfg.wetDry : 0
+
+    this.resonatorBands = []
+    this.resonatorBandGains = []
+
+    for (let i = 0; i < 5; i++) {
+      const bandCfg = resCfg.bands[i]
+
+      const bp = ctx.createBiquadFilter()
+      bp.type = 'bandpass'
+      bp.frequency.value = bandCfg.resonantFreq
+      bp.Q.value = resCfg.q
+
+      const gain = ctx.createGain()
+      gain.gain.value = bandCfg.gain
+
+      this.source.connect(bp)
+      bp.connect(gain)
+      gain.connect(this.resonatorSum)
+
+      this.resonatorBands.push(bp)
+      this.resonatorBandGains.push(gain)
+    }
+
+    this.resonatorSum.connect(this.resonatorWetGain)
+    this.resonatorWetGain.connect(this.masterOut)
+    this.masterOut.connect(ctx.destination)
   }
 
   stop(): void {
@@ -136,6 +160,10 @@ export class AudioEngine {
     this.wetGain = null
     this.masterOut = null
     this.bands = []
+    this.resonatorBands = []
+    this.resonatorBandGains = []
+    this.resonatorSum = null
+    this.resonatorWetGain = null
   }
 
   updateBand(index: number, patch: Partial<BandConfig>): void {
@@ -162,6 +190,55 @@ export class AudioEngine {
     if (!this.ctx) return
     this.wetGain?.gain.setTargetAtTime(value, this.ctx.currentTime, 0.02)
     this.dryGain?.gain.setTargetAtTime(1 - value, this.ctx.currentTime, 0.02)
+  }
+
+  setResonatorChord(chord: Chord): void {
+    this.config.resonator.chord = chord
+    chord.tones.forEach((freq, i) => {
+      this.config.resonator.bands[i].resonantFreq = freq
+      if (this.ctx && this.resonatorBands[i]) {
+        this.resonatorBands[i].frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.25)
+      }
+    })
+  }
+
+  setResonatorQ(q: number): void {
+    this.config.resonator.q = q
+    if (!this.ctx) return
+    const now = this.ctx.currentTime
+    this.resonatorBands.forEach(bp => bp.Q.setTargetAtTime(q, now, 0.02))
+  }
+
+  setResonatorEnabled(enabled: boolean): void {
+    this.config.resonator.enabled = enabled
+    if (!this.ctx || !this.resonatorWetGain) return
+    const target = enabled ? this.config.resonator.wetDry : 0
+    this.resonatorWetGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.02)
+  }
+
+  setResonatorWetDry(value: number): void {
+    this.config.resonator.wetDry = value
+    if (!this.ctx || !this.resonatorWetGain) return
+    if (this.config.resonator.enabled) {
+      this.resonatorWetGain.gain.setTargetAtTime(value, this.ctx.currentTime, 0.02)
+    }
+  }
+
+  updateResonatorBand(i: number, patch: Partial<ResonatorBand>): void {
+    if (i < 0 || i >= 5) return
+    const bandCfg = this.config.resonator.bands[i]
+    if (patch.resonantFreq !== undefined) {
+      bandCfg.resonantFreq = patch.resonantFreq
+      if (this.ctx && this.resonatorBands[i]) {
+        this.resonatorBands[i].frequency.setTargetAtTime(patch.resonantFreq, this.ctx.currentTime, 0.02)
+      }
+    }
+    if (patch.gain !== undefined) {
+      bandCfg.gain = patch.gain
+      if (this.ctx && this.resonatorBandGains[i]) {
+        this.resonatorBandGains[i].gain.setTargetAtTime(patch.gain, this.ctx.currentTime, 0.02)
+      }
+    }
   }
 
   getConfig(): EngineConfig {
